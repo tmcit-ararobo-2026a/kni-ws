@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32h5x.cfg"
+            ],
+            "executable": "${workspaceFolder}/buildDebug/esc-control-hub.elf",
+            "runToEntryPoint": "main",
+            "svdFile": "${workspaceFolder}/STM32H563xx.svd",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
