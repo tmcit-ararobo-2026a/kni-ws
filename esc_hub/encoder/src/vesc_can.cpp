@@ -1,11 +1,11 @@
 #include "encoder/vesc_can.hpp"
 
-VescCAN::VescCAN(FDCAN_HandleTypeDef hfdcan) : hfdcan_(hfdcan) {}
+VescCAN::VescCAN(FDCAN_HandleTypeDef* hfdcan) : hfdcan_(hfdcan) {}
 
 void VescCAN::init()
 {
     HAL_FDCAN_ConfigGlobalFilter(
-        &hfdcan_,
+        hfdcan_,
         FDCAN_ACCEPT_IN_RX_FIFO0,  // 標準ID：一致しなくても受け取る　あとからかえる
         FDCAN_ACCEPT_IN_RX_FIFO0,  // 拡張ID：一致しなくても受け取る
         FDCAN_FILTER_REMOTE,       // リモート標準：フィルタを通す　あとからかえる
@@ -18,14 +18,14 @@ void VescCAN::init()
     rxfilter.FilterID2    = 0x1FFFFFFF;
     rxfilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
     // フィルタ設定
-    if (HAL_FDCAN_ConfigFilter(&hfdcan_, &rxfilter) != HAL_OK) {
+    if (HAL_FDCAN_ConfigFilter(hfdcan_, &rxfilter) != HAL_OK) {
         Error_Handler();
     }
-    if (HAL_FDCAN_Start(&hfdcan_) != HAL_OK) {
+    if (HAL_FDCAN_Start(hfdcan_) != HAL_OK) {
         Error_Handler();
     }
     // 割り込み有効
-    if (HAL_FDCAN_ActivateNotification(&hfdcan_, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+    if (HAL_FDCAN_ActivateNotification(hfdcan_, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
         Error_Handler();
     }
 }
@@ -42,8 +42,8 @@ void VescCAN::send_data(uint32_t can_id, uint8_t* data, uint8_t len)
     txheader.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
     txheader.TxFrameType         = FDCAN_DATA_FRAME;
     // wait until TxFIFO free(TxFIFO is 送信待ち行列)
-    while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan_) == 0);
-    if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan_, &txheader, data) != HAL_OK) {
+    while (HAL_FDCAN_GetTxFifoFreeLevel(hfdcan_) == 0);
+    if (HAL_FDCAN_AddMessageToTxFifoQ(hfdcan_, &txheader, data) != HAL_OK) {
         Error_Handler();
     }
 }

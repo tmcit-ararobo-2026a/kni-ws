@@ -1,7 +1,18 @@
 #include "encoder/encoder.hpp"
 
+#include "drivers/stm32_fdcan/driver_stm32_fdcan.hpp"
+#include "encoder/fdcan_driver.hpp"
 #include "encoder/vesc_can.hpp"
+#include "gn10_can/core/can_bus.hpp"
+#include "gn10_can/core/fdcan_bus.hpp"
+#include "gn10_can/devices/esc_hub_server.hpp"
 #include "tim.h"
+
+gn10_can::drivers::FDCANDriver fdcan1_driver(&hfdcan1);
+VescCAN vesc(&hfdcan2);
+
+gn10_can::FDCANBus fdcan1_bus(fdcan1_driver);
+gn10_can::devices::ESCHubServer esc_hub(fdcan1_bus, 0);
 
 int16_t read_encoder_value(void)
 {
@@ -18,6 +29,7 @@ void setup()
 {
     HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
     TIM8->CNT = 0;
+    vesc.init();
 }
 
 void loop()
