@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            // 💡 修正ポイント1: OpenOCDのスクリプトを検索するパスを追加（拡張機能が自動認識しやすくなります）
+            "searchDir": [],
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32g4x.cfg"
+            ],
+            "executable": "/home/kni/kni_ws/kni-ws/encoder/build/Debug/2026a-gn10-mainboard.elf",
+            "runToEntryPoint": "main",
+            // 💡 修正ポイント2: SVDファイルのパスが本当にルートにあるか確認
+            "svdFile": "${workspaceFolder}/STM32G474xx.svd",
+            "cwd": "${workspaceFolder}",
+            // 💡 おすすめ追加1: デバッグ開始時に自動でビルドを走らせる設定（tasks.jsonでビルドタスクを定義している場合）
+            // "preLaunchTask": "CMake: build", 
+            // 💡 おすすめ追加2: 動かない原因を特定するため、OpenOCDのログを出力させる
+            "showDevDebugOutput": "raw"
+        }
+    ]
+}
