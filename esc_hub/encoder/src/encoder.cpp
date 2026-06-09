@@ -1,5 +1,6 @@
 #include "encoder/encoder.hpp"
 
+#include "encoder/vesc_can.hpp"
 #include "tim.h"
 
 int16_t read_encoder_value(void)
