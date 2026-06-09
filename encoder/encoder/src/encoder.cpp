@@ -16,13 +16,15 @@ int16_t read_encoder_value(void)
 
 void setup()
 {
-    HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_1);
+    HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+    TIM1->CNT = 0;
 }
 
 void loop()
 {
-    uint16_t count;
-    count += read_encoder_value();
-    serial_printf("%d", count);
+    uint16_t enc_buff = TIM1->CNT;
+
+    serial_printf("enc:%d\n", (int16_t)enc_buff);
+
     HAL_Delay(100);
 }
