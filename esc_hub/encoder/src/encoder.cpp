@@ -15,13 +15,26 @@ int16_t read_encoder_value(void)
 
 void setup()
 {
-    HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-    TIM1->CNT = 0;
+    HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
+    TIM8->CNT = 0;
 }
 
 void loop()
 {
-    uint16_t enc_buff = TIM1->CNT;
+    uint16_t enc_buff = TIM8->CNT;
+    HAL_GPIO_TogglePin(LED_1_GPIO_Port, LED_1_Pin);
 
+    if (enc_buff < 10000 && 5000 < enc_buff) {
+        HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_TogglePin(LED_2_GPIO_Port, LED_2_Pin);
+    }
+    if (enc_buff < 15000 && 10000 < enc_buff) {
+        HAL_GPIO_WritePin(LED_2_GPIO_Port, LED_2_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_TogglePin(LED_3_GPIO_Port, LED_3_Pin);
+    }
+    if (15000 < enc_buff) {
+        TIM1->CNT = 0;
+        HAL_GPIO_WritePin(LED_3_GPIO_Port, LED_3_Pin, GPIO_PIN_RESET);
+    }
     HAL_Delay(100);
 }

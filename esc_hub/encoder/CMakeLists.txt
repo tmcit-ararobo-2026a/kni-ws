@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(encoder STATIC
     src/encoder.cpp
-
+    src/vesc_can.cpp
 )
 
 target_include_directories(encoder PUBLIC
