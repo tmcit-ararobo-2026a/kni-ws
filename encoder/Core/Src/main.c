@@ -19,13 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+#include "encoder/encoder.hpp"
 #include "fdcan.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -60,16 +60,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int16_t read_encoder_value(void)
-{
-    uint16_t enc_buff = TIM1->CNT;
-    TIM1->CNT         = 0;
-    if (enc_buff > 32767) {
-        return (int16_t)enc_buff * -1;
-    } else {
-        return (int16_t)enc_buff;
-    }
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -109,17 +100,14 @@ int main(void)
     MX_TIM2_Init();
     MX_TIM3_Init();
     /* USER CODE BEGIN 2 */
-    uint16_t count;
-    HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_1);
+    setup();
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1) {
         /* USER CODE END WHILE */
-
-        count += read_encoder_value();
-        HAL_Delay(100);
+        loop();
         /* USER CODE BEGIN 3 */
     }
     /* USER CODE END 3 */
