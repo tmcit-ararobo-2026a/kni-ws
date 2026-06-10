@@ -16,8 +16,8 @@ gn10_can::devices::ESCHubServer esc_hub(fdcan1_bus, 0);
 
 int16_t read_encoder_value(void)
 {
-    uint16_t enc_buff = TIM1->CNT;
-    TIM1->CNT         = 0;
+    uint16_t enc_buff = TIM8->CNT;
+    TIM8->CNT         = 0;
     if (enc_buff > 32767) {
         return (int16_t)enc_buff * -1;
     } else {
@@ -28,15 +28,15 @@ int16_t read_encoder_value(void)
 void setup()
 {
     HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
-    TIM8->CNT = 0;
     vesc.init();
     fdcan1_driver.init();
 }
 
 void loop()
 {
-    uint16_t enc_buff = TIM8->CNT;
     HAL_GPIO_TogglePin(LED_2_GPIO_Port, LED_2_Pin);
+
+    read_encoder_value();
 
     bool esc_move = false;
     esc_hub.get_vesc_command(esc_move);
