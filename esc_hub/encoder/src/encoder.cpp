@@ -30,6 +30,7 @@ void setup()
     HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
     TIM8->CNT = 0;
     vesc.init();
+    fdcan1_driver.init();
 }
 
 void loop()
@@ -55,5 +56,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
 {
     if (hfdcan->Instance == hfdcan1.Instance) {
         fdcan1_bus.update();
+        HAL_GPIO_TogglePin(LED_4_GPIO_Port, LED_4_Pin);
     }
 }
