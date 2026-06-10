@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    ux_device_cdc_acm.h
-  * @author  MCD Application Team
-  * @brief   USBX Device CDC ACM interface header file
-  ******************************************************************************
-    * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    ux_device_cdc_acm.h
+ * @author  MCD Application Team
+ * @brief   USBX Device CDC ACM interface header file
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __UX_DEVICE_CDC_ACM_H__
@@ -50,11 +50,12 @@ extern "C" {
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-VOID USBD_CDC_ACM_Activate(VOID *cdc_acm_instance);
-VOID USBD_CDC_ACM_Deactivate(VOID *cdc_acm_instance);
-VOID USBD_CDC_ACM_ParameterChange(VOID *cdc_acm_instance);
+VOID USBD_CDC_ACM_Activate(VOID* cdc_acm_instance);
+VOID USBD_CDC_ACM_Deactivate(VOID* cdc_acm_instance);
+VOID USBD_CDC_ACM_ParameterChange(VOID* cdc_acm_instance);
 
 /* USER CODE BEGIN EFP */
+extern UX_SLAVE_CLASS_CDC_ACM* cdc_acm_handler;
 
 /* USER CODE END EFP */
 
@@ -70,4 +71,4 @@ VOID USBD_CDC_ACM_ParameterChange(VOID *cdc_acm_instance);
 #ifdef __cplusplus
 }
 #endif
-#endif  /* __UX_DEVICE_CDC_ACM_H__ */
+#endif /* __UX_DEVICE_CDC_ACM_H__ */

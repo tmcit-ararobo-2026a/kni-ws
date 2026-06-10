@@ -39,6 +39,7 @@ add_subdirectory(cmake/stm32cubemx)
 add_subdirectory(encoder)
 add_subdirectory(gn10-can)
 
+
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
@@ -65,6 +66,7 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
+    USBX
     encoder
     gn10_can
     # Add user defined libraries

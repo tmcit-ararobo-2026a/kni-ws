@@ -6,8 +6,11 @@
 #include "gn10_can/core/can_bus.hpp"
 #include "gn10_can/core/fdcan_bus.hpp"
 #include "gn10_can/devices/esc_hub_server.hpp"
+#include "stdio.h"
 #include "tim.h"
-
+extern "C" {
+#include "ux_device_cdc_acm.h"
+}
 gn10_can::drivers::FDCANDriver fdcan1_driver(&hfdcan1);
 VescCAN vesc(&hfdcan2);
 
@@ -38,6 +41,12 @@ void loop()
 
     read_encoder_value();
 
+    if (cdc_acm_handler != NULL) {
+        char buf[64];
+        ULONG actual_length;
+        sprintf(buf, "enc: %d\r\n", read_encoder_value());
+        ux_device_class_cdc_acm_write(cdc_acm_handler, (UCHAR*)buf, strlen(buf), &actual_length);
+    }
     bool esc_move = false;
     esc_hub.get_vesc_command(esc_move);
 
