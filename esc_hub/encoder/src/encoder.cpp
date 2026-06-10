@@ -37,6 +37,9 @@ void loop()
     uint16_t enc_buff = TIM8->CNT;
     HAL_GPIO_TogglePin(LED_1_GPIO_Port, LED_1_Pin);
 
+    vesc.comm_can_set_current(45, -1.2f);
+    vesc.comm_can_set_duty(45, -1.2f);
+
     if (enc_buff < 10000 && 5000 < enc_buff) {
         HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
         HAL_GPIO_TogglePin(LED_2_GPIO_Port, LED_2_Pin);
