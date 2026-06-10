@@ -35,22 +35,25 @@ void setup()
 void loop()
 {
     uint16_t enc_buff = TIM8->CNT;
-    HAL_GPIO_TogglePin(LED_1_GPIO_Port, LED_1_Pin);
+    HAL_GPIO_TogglePin(LED_2_GPIO_Port, LED_2_Pin);
 
-    vesc.comm_can_set_current(45, -1.2f);
-    vesc.comm_can_set_duty(45, -1.2f);
+    bool esc_move = false;
+    esc_hub.get_vesc_command(esc_move);
 
-    if (enc_buff < 10000 && 5000 < enc_buff) {
-        HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_TogglePin(LED_2_GPIO_Port, LED_2_Pin);
+    if (esc_move) {
+        vesc.comm_can_set_current(45, -1.2f);
+        vesc.comm_can_set_duty(45, -1.2f);
+
+    } else {
+        vesc.comm_can_set_current(45, 0.0f);
+        vesc.comm_can_set_duty(45, 0.0f);
     }
-    if (enc_buff < 15000 && 10000 < enc_buff) {
-        HAL_GPIO_WritePin(LED_2_GPIO_Port, LED_2_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_TogglePin(LED_3_GPIO_Port, LED_3_Pin);
-    }
-    if (15000 < enc_buff) {
-        TIM1->CNT = 0;
-        HAL_GPIO_WritePin(LED_3_GPIO_Port, LED_3_Pin, GPIO_PIN_RESET);
-    }
+
     HAL_Delay(100);
+}
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
+{
+    if (hfdcan->Instance == hfdcan1.Instance) {
+        fdcan1_bus.update();
+    }
 }
