@@ -50,6 +50,9 @@ void loop()
         vesc.comm_can_set_duty(45, 0.0f);
     }
 
+    if (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin)) {
+        HAL_GPIO_TogglePin(LED_3_GPIO_Port, LED_3_Pin);
+    }
     HAL_Delay(100);
 }
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
