@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-#include "app_usbx.h"
 #include "dcache.h"
 #include "encoder/encoder.hpp"
 #include "fdcan.h"
@@ -112,7 +111,6 @@ int main(void)
     MX_TIM6_Init();
     MX_ICACHE_Init();
     MX_DCACHE1_Init();
-    MX_USBX_Init();
     /* USER CODE BEGIN 2 */
     setup();
     /* USER CODE END 2 */

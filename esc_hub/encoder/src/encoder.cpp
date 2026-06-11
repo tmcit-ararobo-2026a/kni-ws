@@ -32,10 +32,12 @@ void setup()
     vesc.init();
     fdcan1_driver.init();
     // 原点取り
+
     while (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin) == GPIO_PIN_SET) {
         vesc.comm_can_set_current(45, -0.5f);
         vesc.comm_can_set_duty(45, -0.5f);
     }
+
     TIM8->CNT = 0;
 }
 
@@ -53,11 +55,11 @@ void loop()
     if (get_vesc_move && !vesc_move) {  // ← !vesc_move で連続押し防止
         vesc_move = true;
         /*
-        while (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin) == GPIO_PIN_SET) {
-            vesc.comm_can_set_current(45, -0.5f);
-            vesc.comm_can_set_duty(45, -0.5f);
-        }
-            */
+            while (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin) == GPIO_PIN_SET) {
+                vesc.comm_can_set_current(45, -0.5f);
+                vesc.comm_can_set_duty(45, -0.5f);
+            }
+    */
         TIM8->CNT = 0;
         enc_buff  = 0;  // 開始時にリセット
     }
@@ -75,7 +77,7 @@ void loop()
         vesc.comm_can_set_duty(45, 0.0f);
     }
 
-    esc_hub.set_encoder_feedbacks(enc_buff);
+    esc_hub.set_encoder_feedbacks(1431);
 
     HAL_Delay(100);
 }
