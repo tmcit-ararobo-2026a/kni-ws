@@ -45,7 +45,7 @@ void loop()
 
     // vesc関連
     static bool vesc_move   = false;
-    static int32_t enc_buff = 0;
+    static int16_t enc_buff = 0;
 
     bool get_vesc_move = false;
     esc_hub.get_vesc_command(get_vesc_move);
@@ -74,6 +74,9 @@ void loop()
         vesc.comm_can_set_current(45, 0.0f);
         vesc.comm_can_set_duty(45, 0.0f);
     }
+
+    esc_hub.set_encoder_feedbacks(enc_buff);
+
     HAL_Delay(100);
 }
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
