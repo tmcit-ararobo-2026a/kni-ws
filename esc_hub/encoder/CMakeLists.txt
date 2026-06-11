@@ -9,15 +9,15 @@ add_library(encoder STATIC
     src/vesc_can.cpp
     src/fdcan_driver.cpp
     ${CMAKE_SOURCE_DIR}/gn10-can/drivers/stm32_fdcan/driver_stm32_fdcan.cpp
+
     
 )
 
-# 2. インクルードパスの通し方（ハイフンに修正し、/include まで指定）
 target_include_directories(encoder PUBLIC
     include
-    ${CMAKE_SOURCE_DIR}/gn10-can          # drivers/... 用
+    ${CMAKE_SOURCE_DIR}/gn10-can        
+
 
 )
 target_link_libraries(encoder PRIVATE stm32cubemx)
-target_link_libraries(encoder PRIVATE USBX)
 target_link_libraries(encoder PUBLIC gn10_can)

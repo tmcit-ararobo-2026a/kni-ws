@@ -8,9 +8,7 @@
 #include "gn10_can/devices/esc_hub_server.hpp"
 #include "stdio.h"
 #include "tim.h"
-extern "C" {
-#include "ux_device_cdc_acm.h"
-}
+
 gn10_can::drivers::FDCANDriver fdcan1_driver(&hfdcan1);
 VescCAN vesc(&hfdcan2);
 
@@ -33,34 +31,48 @@ void setup()
     HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
     vesc.init();
     fdcan1_driver.init();
+    // 原点取り
+    while (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin) == GPIO_PIN_SET) {
+        vesc.comm_can_set_current(45, -0.5f);
+        vesc.comm_can_set_duty(45, -0.5f);
+    }
+    TIM8->CNT = 0;
 }
 
 void loop()
 {
     HAL_GPIO_TogglePin(LED_2_GPIO_Port, LED_2_Pin);
 
-    read_encoder_value();
+    // vesc関連
+    static bool vesc_move   = false;
+    static int32_t enc_buff = 0;
 
-    if (cdc_acm_handler != NULL) {
-        char buf[64];
-        ULONG actual_length;
-        sprintf(buf, "enc: %d\r\n", read_encoder_value());
-        ux_device_class_cdc_acm_write(cdc_acm_handler, (UCHAR*)buf, strlen(buf), &actual_length);
+    bool get_vesc_move = false;
+    esc_hub.get_vesc_command(get_vesc_move);
+
+    if (get_vesc_move && !vesc_move) {  // ← !vesc_move で連続押し防止
+        vesc_move = true;
+        /*
+        while (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin) == GPIO_PIN_SET) {
+            vesc.comm_can_set_current(45, -0.5f);
+            vesc.comm_can_set_duty(45, -0.5f);
+        }
+            */
+        TIM8->CNT = 0;
+        enc_buff  = 0;  // 開始時にリセット
     }
-    bool esc_move = false;
-    esc_hub.get_vesc_command(esc_move);
 
-    if (esc_move) {
+    enc_buff += read_encoder_value();
+
+    if (vesc_move) {
         vesc.comm_can_set_current(45, -1.2f);
         vesc.comm_can_set_duty(45, -1.2f);
-
+        if (enc_buff > 4000) {
+            vesc_move = false;
+        }
     } else {
         vesc.comm_can_set_current(45, 0.0f);
         vesc.comm_can_set_duty(45, 0.0f);
-    }
-
-    if (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin)) {
-        HAL_GPIO_TogglePin(LED_3_GPIO_Port, LED_3_Pin);
     }
     HAL_Delay(100);
 }
