@@ -1,3 +1,6 @@
 [submodule "esc_hub/gn10-can"]
 	path = esc_hub/gn10-can
 	url = https://github.com/ararobo/gn10-can.git
+[submodule "gn10_esc_server/gn10-can"]
+	path = gn10_esc_server/gn10-can
+	url = https://github.com/ararobo/gn10-can.git
