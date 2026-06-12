@@ -39,8 +39,11 @@ void setup()
         gn10_can::FDCANFrame frame = gn10_can::FDCANFrame::make(
             gn10_can::id::DeviceType::ESCHub, 0, gn10_can::id::MsgTypeESCHub::Encoder
         );
+
         HAL_GPIO_TogglePin(LED_3_GPIO_Port, LED_3_Pin);
 
+        vesc.comm_can_set_current(45, -1.2f);
+        vesc.comm_can_set_duty(45, -1.2f);
         frame.data[0] = 123;
         frame.dlc     = 1;
         fdcan1_bus.send_frame(frame);
