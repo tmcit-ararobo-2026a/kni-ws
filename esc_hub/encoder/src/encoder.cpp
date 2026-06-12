@@ -36,11 +36,19 @@ void setup()
     while (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin) == GPIO_PIN_SET) {
         vesc.comm_can_set_current(45, -0.5f);
         vesc.comm_can_set_duty(45, -0.5f);
+        gn10_can::FDCANFrame frame = gn10_can::FDCANFrame::make(
+            gn10_can::id::DeviceType::ESCHub, 0, gn10_can::id::MsgTypeESCHub::Encoder
+        );
+        HAL_GPIO_TogglePin(LED_3_GPIO_Port, LED_3_Pin);
+
+        frame.data[0] = 123;
+        frame.dlc     = 1;
+        fdcan1_bus.send_frame(frame);
     }
 
     TIM8->CNT = 0;
 }
-
+static int32_t enc_buf;
 void loop()
 {
     HAL_GPIO_TogglePin(LED_2_GPIO_Port, LED_2_Pin);
@@ -59,7 +67,7 @@ void loop()
                 vesc.comm_can_set_current(45, -0.5f);
                 vesc.comm_can_set_duty(45, -0.5f);
             }
-    */
+
         TIM8->CNT = 0;
         enc_buff  = 0;  // 開始時にリセット
     }
@@ -71,15 +79,25 @@ void loop()
         vesc.comm_can_set_duty(45, -1.2f);
         if (enc_buff > 4000) {
             vesc_move = false;
+            HAL_GPIO_WritePin(LED_3_GPIO_Port, LED_3_Pin, GPIO_PIN_SET);
         }
     } else {
         vesc.comm_can_set_current(45, 0.0f);
         vesc.comm_can_set_duty(45, 0.0f);
     }
+*/
+        vesc.comm_can_set_current(45, -1.2f);
+        vesc.comm_can_set_duty(45, -1.2f);
 
-    esc_hub.set_encoder_feedbacks(1431);
+        if (TIM8->CNT > 10) {
+            HAL_GPIO_TogglePin(LED_1_GPIO_Port, LED_1_Pin);
+            vesc.comm_can_set_current(45, 0.0f);
+            vesc.comm_can_set_duty(45, 0.0f);
+        }
+        esc_hub.set_encoder_feedbacks(1431);
 
-    HAL_Delay(100);
+        HAL_Delay(1);
+    }
 }
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
 {
