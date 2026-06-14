@@ -1,0 +1,113 @@
+name: CI
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # -----------------------------------------------------------
+  # 1. Standalone C++ Test
+  # -----------------------------------------------------------
+  standalone_test:
+    name: Generic C++ (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Standalone側も高速化するため ccache アクションを追加
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ matrix.os }}-standalone
+        variant: ${{ matrix.os == 'windows-latest' && 'sccache' || 'ccache' }}
+
+    - name: Configure CMake
+      run: |
+        # OSに応じてランチャーを切り替え
+        if [ "$RUNNER_OS" == "Windows" ]; then LAUNCHER="sccache"; else LAUNCHER="ccache"; fi
+        
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_FOR_ROS2=OFF \
+          -DBUILD_TESTS=ON \
+          -DCMAKE_C_COMPILER_LAUNCHER=$LAUNCHER \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=$LAUNCHER
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Test
+      working-directory: build
+      run: ctest -C Release --output-on-failure
+
+  # -----------------------------------------------------------
+  # 2. ROS 2 Test (Container)
+  # -----------------------------------------------------------
+  ros2_test:
+    name: ROS 2 Humble Test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    container:
+      image: ros:humble-ros-base
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ROS 2 側のキャッシュ設定
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-ros2-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            ccache-ros2-${{ runner.os }}-
+
+      - name: Build and Test
+        shell: bash
+        run: |
+          # エラー時に即停止させる設定
+          set -e
+
+          # 環境読み込み
+          source /opt/ros/humble/setup.bash
+          
+          # ビルドツール等のインストール (apt-get updateは必須)
+          apt-get update && apt-get install -y git ccache
+          
+          # ccacheの設定
+          export CCACHE_DIR=${{ github.workspace }}/.ccache
+          export PATH="/usr/lib/ccache:$PATH"
+          mkdir -p $CCACHE_DIR
+          # キャッシュサイズ上限を設定して肥大化を防ぐ
+          ccache --max-size=500M
+          
+          # 依存関係の解決
+          rosdep update
+          rosdep install --from-paths . --ignore-src -y
+          
+          # ビルド
+          colcon build \
+            --packages-select gn10_can \
+            --cmake-args -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          
+          # テスト (レポート出力オプションは削除)
+          colcon test \
+            --packages-select gn10_can \
+            --ctest-args --output-on-failure
