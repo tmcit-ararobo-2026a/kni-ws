@@ -73,6 +73,7 @@ void loop()
     }
 
     update_heartbeat_led();
+
     esc_hub.set_encoder_feedbacks(enc_buff);
 
     esc_hub.get_vesc_command(vesc_move);
