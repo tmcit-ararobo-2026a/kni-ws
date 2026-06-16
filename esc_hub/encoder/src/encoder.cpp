@@ -35,8 +35,11 @@ int16_t read_encoder_value(void)
 {
     uint16_t enc_buff = TIM8->CNT;
     TIM8->CNT         = 0;
-
-    return (int16_t)enc_buff;
+    if (enc_buff > 32767) {
+        return (int16_t)enc_buff * -1;
+    } else {
+        return (int16_t)enc_buff;
+    }
 }
 
 void setup()
@@ -53,15 +56,25 @@ void setup()
         HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_SET);
     }
     HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
-    TIM8->CNT = 0;
 }
-static int32_t enc_buff = 123;
+static int32_t enc_buff;
+
+bool vesc_move;
 
 void loop()
 {
     update_heartbeat_led();
-    esc_hub.set_encoder_feedbacks(enc_buff);
+    enc_buff += read_encoder_value();
+    esc_hub.set_encoder_feedbacks(read_encoder_value());
 
+    esc_hub.get_vesc_command(vesc_move);
+    if (vesc_move) {
+        vesc.comm_can_set_current(45, -1.2f);
+        vesc.comm_can_set_duty(45, -1.2f);
+    } else {
+        vesc.comm_can_set_current(45, -0.0f);
+        vesc.comm_can_set_duty(45, -0.0f);
+    }
     // loop()内のエラーチェック部分を変更
 
     HAL_Delay(1);
