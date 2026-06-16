@@ -44,9 +44,11 @@ int16_t read_encoder_value(void)
 
 void setup()
 {
-    HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
-    vesc.init();
     fdcan1_driver.init();
+
+    vesc.init();
+    HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
+    TIM8->CNT = 0;
     // 原点取り
 
     while (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin) == GPIO_PIN_SET) {
@@ -57,15 +59,21 @@ void setup()
     }
     HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
 }
-static int32_t enc_buff;
 
 bool vesc_move;
 
 void loop()
 {
+    int32_t enc_buff = TIM8->CNT;
+
+    if (enc_buff > 1000) {
+        HAL_GPIO_WritePin(LED_3_GPIO_Port, LED_3_Pin, GPIO_PIN_SET);
+    } else {
+        HAL_GPIO_WritePin(LED_3_GPIO_Port, LED_3_Pin, GPIO_PIN_RESET);
+    }
+
     update_heartbeat_led();
-    enc_buff += read_encoder_value();
-    esc_hub.set_encoder_feedbacks(read_encoder_value());
+    esc_hub.set_encoder_feedbacks(enc_buff);
 
     esc_hub.get_vesc_command(vesc_move);
     if (vesc_move) {
