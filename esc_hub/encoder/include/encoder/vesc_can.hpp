@@ -8,6 +8,7 @@ typedef enum {
     CAN_PACKET_SET_CURRENT_BRAKE,
     CAN_PACKET_SET_RPM,
     CAN_PACKET_SET_POS,
+    CAN_PACKET_STATUS          = 9,
     CAN_PACKET_SET_CURRENT_REL = 10,
     CAN_PACKET_SET_CURRENT_BRAKE_REL,
     CAN_PACKET_SET_CURRENT_HANDBRAKE,
@@ -18,13 +19,21 @@ typedef enum {
 class VescCAN
 {
 private:
+    struct VescStatus1 {
+        int32_t rpm;
+        float current;
+        float duty;
+    };
     FDCAN_RxHeaderTypeDef rxheader;
     FDCAN_FilterTypeDef rxfilter;
     FDCAN_TxHeaderTypeDef txheader;
     uint8_t rxdata[8];
     FDCAN_HandleTypeDef* hfdcan_;
+    VescStatus1 status1_;
 
 public:
+    void parse_status1(uint8_t* data, VescStatus1& status);
+
     VescCAN(FDCAN_HandleTypeDef* hfdcan);
     void init();
     void send_data(uint32_t can_id, uint8_t* data, uint8_t len);
@@ -58,6 +67,11 @@ public:
     void comm_can_set_current_brake_rel(uint8_t controller_id, float current_rel);
 
     void comm_can_set_handbrake(uint8_t controller_id, float current);
+
+    int32_t get_rpm() const
+    {
+        return -(status1_.rpm / 7);
+    }
 
     void comm_can_set_handbrake_rel(uint8_t controller_id, float current_rel);
 };

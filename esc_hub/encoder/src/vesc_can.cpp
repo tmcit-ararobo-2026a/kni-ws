@@ -47,11 +47,19 @@ void VescCAN::send_data(uint32_t can_id, uint8_t* data, uint8_t len)
         Error_Handler();
     }
 }
+void VescCAN::parse_status1(uint8_t* data, VescStatus1& status)
+{
+    status.rpm     = (int32_t)((data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3]);
+    status.current = (int16_t)((data[4] << 8) | data[5]) / 10.0f;
+    status.duty    = (int16_t)((data[6] << 8) | data[7]) / 1000.0f;
+}
 
 void VescCAN::receive_data(uint32_t can_id, uint8_t* data, uint8_t len)
 {
-    uint32_t current_id_comp = 25 | ((uint32_t)CAN_PACKET_SET_CURRENT_BRAKE << 8);
-    if (can_id == current_id_comp) {
+    uint8_t packet_id = (can_id >> 8) & 0xFF;
+
+    if (packet_id == CAN_PACKET_STATUS) {
+        parse_status1(data, status1_);
     }
 }
 

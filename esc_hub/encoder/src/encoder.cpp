@@ -52,7 +52,7 @@ void setup()
     // 原点取り
 
     while (HAL_GPIO_ReadPin(LIM1_2_GPIO_Port, LIM1_2_Pin) == GPIO_PIN_SET) {
-        vesc.comm_can_set_current(45, -0.5f);
+        // vesc.comm_can_set_current(45, -0.5f);
         vesc.comm_can_set_duty(45, -0.5f);
 
         HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_SET);
@@ -64,34 +64,44 @@ bool vesc_move;
 
 void loop()
 {
-    int32_t enc_buff = TIM8->CNT;
+    int32_t rpm = vesc.get_rpm();
+    /*
+    uint32_t enc_buff = TIM8->CNT;
+    TIM8->CNT         = 0;
 
     if (enc_buff > 1000) {
         HAL_GPIO_WritePin(LED_3_GPIO_Port, LED_3_Pin, GPIO_PIN_SET);
     } else {
         HAL_GPIO_WritePin(LED_3_GPIO_Port, LED_3_Pin, GPIO_PIN_RESET);
-    }
+    }*/
 
     update_heartbeat_led();
-
-    esc_hub.set_encoder_feedbacks(enc_buff);
+    esc_hub.set_encoder_feedbacks(rpm);
 
     esc_hub.get_vesc_command(vesc_move);
     if (vesc_move) {
-        vesc.comm_can_set_current(45, -1.2f);
+        // vesc.comm_can_set_current(45, -1.2f);
         vesc.comm_can_set_duty(45, -1.2f);
     } else {
-        vesc.comm_can_set_current(45, -0.0f);
+        // vesc.comm_can_set_current(45, -0.0f);
         vesc.comm_can_set_duty(45, -0.0f);
     }
     // loop()内のエラーチェック部分を変更
 
-    HAL_Delay(1);
+    HAL_Delay(100);
 }
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
 {
     if (hfdcan->Instance == hfdcan1.Instance) {
         fdcan1_bus.update();
+    }
+    // ↓追加
+    if (hfdcan->Instance == hfdcan2.Instance) {
+        FDCAN_RxHeaderTypeDef rx_header;
+        uint8_t rx_data[8];
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, rx_data) == HAL_OK) {
+            vesc.receive_data(rx_header.Identifier, rx_data, 8);
+        }
     }
 }
