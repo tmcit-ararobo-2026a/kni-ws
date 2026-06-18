@@ -13,6 +13,7 @@ typedef enum {
     CAN_PACKET_SET_CURRENT_BRAKE_REL,
     CAN_PACKET_SET_CURRENT_HANDBRAKE,
     CAN_PACKET_SET_CURRENT_HANDBRAKE_REL,
+    CAN_PACKET_STATUS_5          = 27,
     CAN_PACKET_MAKE_ENUM_32_BITS = 0xFFFFFFFF,
 } CAN_PACKET_ID;
 
@@ -24,15 +25,23 @@ private:
         float current;
         float duty;
     };
+    struct VescStatus5 {  // 追加
+        int32_t taco;
+        float voltage;
+    };
+
     FDCAN_RxHeaderTypeDef rxheader;
     FDCAN_FilterTypeDef rxfilter;
     FDCAN_TxHeaderTypeDef txheader;
     uint8_t rxdata[8];
     FDCAN_HandleTypeDef* hfdcan_;
     VescStatus1 status1_;
+    VescStatus5 status5_;
 
 public:
     void parse_status1(uint8_t* data, VescStatus1& status);
+
+    void parse_status5(uint8_t* data, VescStatus5& status);  // 追加
 
     VescCAN(FDCAN_HandleTypeDef* hfdcan);
     void init();
@@ -71,6 +80,11 @@ public:
     int32_t get_rpm() const
     {
         return -(status1_.rpm / 7);
+    }
+
+    int32_t get_taco() const
+    {
+        return status5_.taco;
     }
 
     void comm_can_set_handbrake_rel(uint8_t controller_id, float current_rel);
