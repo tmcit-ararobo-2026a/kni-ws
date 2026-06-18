@@ -60,16 +60,15 @@ void VescCAN::parse_status5(uint8_t* data, VescStatus5& status)
     status.voltage = (int16_t)((data[4] << 8) | data[5]) / 10.0f;
 }
 
-volatile uint32_t last_can_id = 0;
-
 void VescCAN::receive_data(uint32_t can_id, uint8_t* data, uint8_t len)
 {
-    last_can_id       = can_id;
     uint8_t packet_id = (can_id >> 8) & 0xFF;
 
+    // rpm feedback
     if (packet_id == CAN_PACKET_STATUS) {
         parse_status1(data, status1_);
     }
+    // taco feedback
     if (packet_id == CAN_PACKET_STATUS_5) {  // 追加
         parse_status5(data, status5_);
     }

@@ -50,20 +50,22 @@ void do_homing()
         HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_SET);
     }
     vesc.comm_can_set_rpm(45, 0);
+
     HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_RESET);
 
+    // 初期位置設定（後で絶対値に変えます）
     for (int i = 0; i < 25; i++) {
         vesc.comm_can_set_rpm(45, -2300);
         HAL_Delay(10);
     }
     vesc.comm_can_set_rpm(45, 0);
 
-    int32_t prev1 = 0, prev2 = 0;
-    do {
+    int32_t prev1 = -1, prev2 = -2;
+    while (!(vesc.get_taco() == prev1 && prev1 == prev2)) {
         prev2 = prev1;
         prev1 = vesc.get_taco();
         HAL_Delay(50);
-    } while (!(vesc.get_taco() == prev1 && prev1 == prev2));
+    }
 
     origin_taco    = vesc.get_taco();
     position       = 0;
@@ -71,7 +73,7 @@ void do_homing()
     prev_position2 = 0;
     last_position  = 0;
     initialized    = false;
-    homing_done    = true;  // 最後に追加
+    homing_done    = true;
 }
 
 void setup()
@@ -79,17 +81,21 @@ void setup()
     fdcan1_driver.init();
 
     vesc.init();
-    HAL_TIM_Encoder_Start(&htim8, TIM_CHANNEL_ALL);
-    TIM8->CNT = 0;
 
     do_homing();
 }
+
+// 定義類
+float vesc_velo[4]            = {0.0f, 0.0f, 0.0f, 0.0f};
+float rpm_conversion_constant = 100000.0f;
+float vesc_angular_velocity_command;
 
 void loop()
 {
     int32_t rpm  = vesc.get_rpm();
     int32_t taco = vesc.get_taco();
 
+    // potision処理
     if (abs(rpm) > 500) {
         int32_t new_position = taco - origin_taco;
         if (abs(new_position - last_position) > 10) {
@@ -103,30 +109,38 @@ void loop()
         prev_position2 = prev_position1;
         prev_position1 = position;
     }
+
     if (abs(position) > 200) initialized = true;
 
     // 3回連続同じ値なら0にリセット
-    if (initialized && (abs(position) > 20000 || abs(position) < 500)) {
+    if (homing_done && initialized && (abs(position) > 200 || abs(position) < 50)) {
         if ((position == prev_position1) && (position == prev_position2)) {
-            do_homing();  // ← リセット時も同じ処理
+            do_homing();
         }
     }
 
-    // abs(position) > 100 で停止
-    bool stuck = (abs(position) > 130);
+    // abs(position) > 130 で停止
+    bool stuck = (abs(position) > 200);
 
-    esc_hub.get_vesc_command(vesc_move);
-    if (vesc_move && !stuck) {
-        if (position < -1000) {
-            vesc.comm_can_set_current_brake(45, 1.0f);
+    if (esc_hub.get_angular_velocities(vesc_velo)) {
+        HAL_GPIO_WritePin(LED_1_GPIO_Port, LED_1_Pin, GPIO_PIN_SET);
+        if (vesc_velo[0] > 0.0f || vesc_velo[1] > 0.0f || vesc_velo[2] > 0.0f ||
+            vesc_velo[3] > 0.0f) {
+            HAL_GPIO_WritePin(LED_2_GPIO_Port, LED_2_Pin, GPIO_PIN_SET);
         } else {
-            vesc.comm_can_set_rpm(45, -100000);
+            HAL_GPIO_WritePin(LED_2_GPIO_Port, LED_2_Pin, GPIO_PIN_RESET);
         }
-    } else {
-        vesc.comm_can_set_rpm(45, 0);
     }
 
-    esc_hub.set_encoder_feedbacks(position);
+    vesc_angular_velocity_command = vesc_velo[0] * rpm_conversion_constant;
+
+    if (!stuck) {
+        vesc.comm_can_set_rpm(45, vesc_angular_velocity_command);
+    }
+
+    float neko[4] = {vesc_angular_velocity_command, 0.0f, 0.0f, 0.0f};
+    esc_hub.set_angular_velocity_feedbacks(neko);
+
     update_heartbeat_led();
     HAL_Delay(10);
 }
@@ -136,7 +150,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
     if (hfdcan->Instance == hfdcan1.Instance) {
         fdcan1_bus.update();
     }
-    // ↓追加
     if (hfdcan->Instance == hfdcan2.Instance) {
         FDCAN_RxHeaderTypeDef rx_header;
         uint8_t rx_data[8];
